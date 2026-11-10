@@ -106,7 +106,8 @@ class _HomePageState extends State<HomePage> {
       nextReminder(),const NotificationDetails(
         android:AndroidNotificationDetails('study_daily','Daily study reminders',channelDescription:'Study schedule reminders',importance:Importance.high,priority:Priority.high),
         iOS:DarwinNotificationDetails()),
-      androuiLocalNotificationDateInterpretation: UILocalNotificationDateInterpretation.absoluteTime,idScheduleMode:AndroidScheduleMode.inexactAllowWhileIdle,
+    uiLocalNotificationDateInterpretation: UILocalNotificationDateInterpretation.absoluteTime,
+androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
       matchDateTimeComponents:DateTimeComponents.time);
     await save();
     if(mounted)ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content:Text('Daily reminder scheduled')));
