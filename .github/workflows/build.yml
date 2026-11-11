@@ -27,10 +27,43 @@ jobs:
 
       - name: Create Android project
         run: flutter create . --platforms=android
+
       - name: Enable core library desugaring
         run: |
-          sed -i '/compileOptions {/a\        coreLibraryDesugaringEnabled true' android/app/build.gradle
-          sed -i '/dependencies {/a\    coreLibraryDesugaring "com.android.tools:desugar_jdk_libs:2.1.4"' android/app/build.gradle
+          python3 - <<'PY'
+          from pathlib import Path
+
+          p = Path("android/app/build.gradle.kts")
+          groovy = False
+
+          if not p.exists():
+              p = Path("android/app/build.gradle")
+              groovy = True
+
+          if not p.exists():
+              raise SystemExit("Android Gradle file not found")
+
+          s = p.read_text()
+
+          if groovy:
+              flag = "coreLibraryDesugaringEnabled true"
+              dep = "coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:2.1.4'"
+          else:
+              flag = "isCoreLibraryDesugaringEnabled = true"
+              dep = 'coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")'
+
+          if flag not in s:
+              s = s.replace("compileOptions {", "compileOptions {\n        " + flag, 1)
+
+          if dep not in s:
+              if "dependencies {" in s:
+                  s = s.replace("dependencies {", "dependencies {\n    " + dep, 1)
+              else:
+                  s += "\n\ndependencies {\n    " + dep + "\n}\n"
+
+          p.write_text(s)
+          PY
+
       - name: Install dependencies
         run: flutter pub get
 
