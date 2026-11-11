@@ -1,0 +1,4 @@
+linter:
+  rules:
+    avoid_print: true
+    

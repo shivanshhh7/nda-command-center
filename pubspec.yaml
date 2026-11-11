@@ -1,6 +1,6 @@
-name: study_command_center
-description: All-in-One Study Planner and Tracker
-publish_to: none
+name: ascend
+description: ASCEND - Earn Your Elevation
+publish_to: 'none'
 version: 1.0.0+1
 
 environment:
@@ -16,6 +16,17 @@ dependencies:
 dev_dependencies:
   flutter_test:
     sdk: flutter
+  flutter_launcher_icons: ^0.14.4
+flutter_lints: ^4.0.0
 
 flutter:
   uses-material-design: true
+  assets:
+    - assets/ascend_icon.png
+
+flutter_launcher_icons:
+  android: true
+  ios: false
+  image_path: assets/ascend_icon.png
+  adaptive_icon_background: '#000000'
+  adaptive_icon_foreground: assets/ascend_icon.png

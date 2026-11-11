@@ -1,9 +1,10 @@
-name: Build Study Command Center APK
+name: Build ASCEND APK
 
 on:
   push:
     branches:
       - main
+      - ascend-development
   workflow_dispatch:
 
 jobs:
@@ -26,7 +27,18 @@ jobs:
           channel: stable
 
       - name: Create Android project
-        run: flutter create . --platforms=android
+        run: flutter create . --project-name ascend --org com.ascend.app --platforms=android
+
+      - name: Set ASCEND app label
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+          p = Path("android/app/src/main/AndroidManifest.xml")
+          s = p.read_text()
+          s = re.sub(r'android:label="[^"]*"', 'android:label="ASCEND"', s, count=1)
+          p.write_text(s)
+          PY
 
       - name: Enable core library desugaring
         run: |
@@ -34,32 +46,20 @@ jobs:
           from pathlib import Path
 
           p = Path("android/app/build.gradle.kts")
-          groovy = False
-
-          if not p.exists():
-              p = Path("android/app/build.gradle")
-              groovy = True
-
-          if not p.exists():
-              raise SystemExit("Android Gradle file not found")
-
-          s = p.read_text()
-
-          if groovy:
-              flag = "coreLibraryDesugaringEnabled true"
-              dep = "coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:2.1.4'"
-          else:
+          if p.exists():
+              s = p.read_text()
               flag = "isCoreLibraryDesugaringEnabled = true"
               dep = 'coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")'
+          else:
+              p = Path("android/app/build.gradle")
+              s = p.read_text()
+              flag = "coreLibraryDesugaringEnabled true"
+              dep = "coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:2.1.4'"
 
           if flag not in s:
               s = s.replace("compileOptions {", "compileOptions {\n        " + flag, 1)
-
           if dep not in s:
-              if "dependencies {" in s:
-                  s = s.replace("dependencies {", "dependencies {\n    " + dep, 1)
-              else:
-                  s += "\n\ndependencies {\n    " + dep + "\n}\n"
+              s = s.replace("dependencies {", "dependencies {\n    " + dep, 1)
 
           p.write_text(s)
           PY
@@ -67,11 +67,21 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
 
-      - name: Build APK
+      - name: Generate launcher icons
+        run: dart run flutter_launcher_icons
+
+      - name: Analyze Flutter code
+        run: flutter analyze --no-fatal-infos
+
+      - name: Build release APK
         run: flutter build apk --release
+
+      - name: Rename APK
+        run: cp build/app/outputs/flutter-apk/app-release.apk build/app/outputs/flutter-apk/ASCEND.apk
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: Study-Command-Center-APK
-          path: build/app/outputs/flutter-apk/app-release.apk
+          name: ASCEND-APK
+          path: build/app/outputs/flutter-apk/ASCEND.apk
+          
