@@ -1,9 +1,10 @@
-name: Build Study Command Center APK
+name: Build ASCEND APK
 
 on:
   push:
     branches:
       - main
+      - ascend-development
   workflow_dispatch:
 
 jobs:
