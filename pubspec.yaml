@@ -1,6 +1,6 @@
 name: ascend
 description: ASCEND - Earn Your Elevation
-publish_to: none
+publish_to: 'none'
 version: 1.0.0+1
 
 environment:
@@ -17,6 +17,7 @@ dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_launcher_icons: ^0.14.4
+flutter_lints: ^4.0.0
 
 flutter:
   uses-material-design: true
