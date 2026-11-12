@@ -39,31 +39,51 @@ jobs:
           s = re.sub(r'android:label="[^"]*"', 'android:label="ASCEND"', s, count=1)
           p.write_text(s)
           PY
-
       - name: Enable core library desugaring
         run: |
           python3 - <<'PY'
           from pathlib import Path
+          import re
 
           p = Path("android/app/build.gradle.kts")
-          if p.exists():
-              s = p.read_text()
-              flag = "isCoreLibraryDesugaringEnabled = true"
+          kotlin = p.exists()
+
+          if not kotlin:
+              p = Path("android/app/build.gradle")
+
+          s = p.read_text()
+
+          if kotlin:
+              if "isCoreLibraryDesugaringEnabled" not in s:
+                  s = re.sub(
+                      r'compileOptions\s*\{',
+                      'compileOptions {\n        isCoreLibraryDesugaringEnabled = true',
+                      s, count=1
+                  )
               dep = 'coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")'
           else:
-              p = Path("android/app/build.gradle")
-              s = p.read_text()
-              flag = "coreLibraryDesugaringEnabled true"
-              dep = "coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:2.1.4'"
+              if "coreLibraryDesugaringEnabled true" not in s:
+                  s = re.sub(
+                      r'compileOptions\s*\{',
+                      'compileOptions {\n        coreLibraryDesugaringEnabled true',
+                      s, count=1
+                  )
+              dep = 'coreLibraryDesugaring "com.android.tools:desugar_jdk_libs:2.1.4"'
 
-          if flag not in s:
-              s = s.replace("compileOptions {", "compileOptions {\n        " + flag, 1)
           if dep not in s:
-              s = s.replace("dependencies {", "dependencies {\n    " + dep, 1)
+              s = re.sub(
+                  r'dependencies\s*\{',
+                  lambda m: m.group(0) + '\n    ' + dep,
+                  s, count=1
+              )
+
+          if dep not in s:
+              raise Exception("Could not add desugaring dependency")
 
           p.write_text(s)
           PY
 
+      
       - name: Install dependencies
         run: flutter pub get
 
