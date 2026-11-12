@@ -46,44 +46,27 @@ jobs:
           import re
 
           p = Path("android/app/build.gradle.kts")
-          kotlin = p.exists()
-
-          if not kotlin:
-              p = Path("android/app/build.gradle")
-
           s = p.read_text()
 
-          if kotlin:
-              if "isCoreLibraryDesugaringEnabled" not in s:
-                  s = re.sub(
-                      r'compileOptions\s*\{',
-                      'compileOptions {\n        isCoreLibraryDesugaringEnabled = true',
-                      s, count=1
-                  )
-              dep = 'coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")'
-          else:
-              if "coreLibraryDesugaringEnabled true" not in s:
-                  s = re.sub(
-                      r'compileOptions\s*\{',
-                      'compileOptions {\n        coreLibraryDesugaringEnabled true',
-                      s, count=1
-                  )
-              dep = 'coreLibraryDesugaring "com.android.tools:desugar_jdk_libs:2.1.4"'
+          flag = "isCoreLibraryDesugaringEnabled = true"
+          dep = 'coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")'
+
+          if flag not in s:
+              pattern = r'compileOptions\s*\{'
+              if re.search(pattern, s):
+                  s = re.sub(pattern, lambda m: m.group(0) + "\n        " + flag, s, count=1)
+              else:
+                  s = re.sub(r'android\s*\{', lambda m: m.group(0) + "\n    compileOptions {\n        " + flag + "\n    }", s, count=1)
 
           if dep not in s:
-              s = re.sub(
-                  r'dependencies\s*\{',
-                  lambda m: m.group(0) + '\n    ' + dep,
-                  s, count=1
-              )
-
-          if dep not in s:
-              raise Exception("Could not add desugaring dependency")
+              pattern = r'dependencies\s*\{'
+              if re.search(pattern, s):
+                  s = re.sub(pattern, lambda m: m.group(0) + "\n    " + dep, s, count=1)
+              else:
+                  s += "\n\ndependencies {\n    " + dep + "\n}\n"
 
           p.write_text(s)
           PY
-
-      
       - name: Install dependencies
         run: flutter pub get
 
